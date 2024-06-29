@@ -1,7 +1,7 @@
 import { pool } from "../db.js";
 import { usersSchema } from "../models/users.js";
 
-//metodos para consultar eventos en la base de datos
+//metodos para consultar usuarios registrados eventos en la base de datos
 export const userSelects = async (req, res) => {
   try {
     // Realiza una consulta simple a la base de datos
@@ -22,27 +22,27 @@ export const userSelects = async (req, res) => {
   }
 };
 
-//metodos para consultar un evento en la base de datos
-export const userUnic = async(req, res) => {
+//metodos para consultar un usuario registrado evento en la base de datos
+export const userUnic = async (req, res) => {
   try {
     //obtener la consulta de  un unico usuario
-    
-    const [result] = await pool.query('SELECT * FROM usuarios WHERE id_user = ?', [req.params.id]);
 
-    if(result.length === 0){
+    const [result] = await pool.query(
+      "SELECT * FROM usuarios WHERE id_user = ?",
+      [req.params.id]
+    );
+
+    if (result.length === 0) {
       return res.status(404).json({
-        status:"error",
-        message: "ID no encontrado"
-
-      })
+        status: "error",
+        message: "ID no encontrado",
+      });
     }
     return res.status(200).send({
       status: "success",
-      message:"Consulta id exitosa ",
-      result
+      message: "Consulta id exitosa ",
+      result,
     });
-    
- 
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -51,7 +51,7 @@ export const userUnic = async(req, res) => {
   }
 };
 
-//metodos para crear eventos en la base de datos
+//metodos para crear usuarios eventos en la base de datos
 export const userCreate = async (req, res) => {
   try {
     const {
@@ -92,7 +92,6 @@ export const userCreate = async (req, res) => {
 
     const [result] = await pool.query(query, values);
 
-    console.log(result);
     return res.status(200).send({
       status: "success",
       message: "Usuario creado exitosamente",
@@ -108,33 +107,64 @@ export const userCreate = async (req, res) => {
   }
 };
 
-//metodos para actualizar eventos en la base de datos
-export const userUpdate = (req, res) => {
+//metodos para actualizar usuarios registrados eventos en la base de datos
+export const userUpdate = async (req, res) => {
   try {
+    const { tableName, columns } = usersSchema;
+    //filtrar solo las columnas que esten en elreq.body
+    const updateColumns = columns.filter((column) =>
+      req.body.hasOwnProperty(column)
+    );
+
+    const setClause = updateColumns.map((column) => `${column} = ?`).join(",");
+    const values = updateColumns.map((column) => req.body[column]);
+
+    const query = `UPDATE ${tableName} SET ${setClause} WHERE id_user = ?`;
+    values.push(req.params.id); // Añadir el id del usuario al final de los valores
+    const [result] = await pool.query(query, values);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Id no encontrado",
+      });
+    }
+
     return res.status(200).send({
       status: "success",
-      message: "Metodo para  Atualizar consulta exitosa",
+      message: "Actualización de usuario exitosa",
+      result,
     });
   } catch (error) {
+    console.error("Error en la función userUpdate:", error);
     return res.status(500).json({
       status: "error",
-      message: "Error al obtener las consulta",
+      message: "Error al procesar la solicitud",
+      error: error.message, // Incluir el mensaje de error para mayor claridad
     });
   }
 };
+//metodos para eliminar usuarios registrados eventos en la base de datos
 
-//metodos para eliminar eventos en la base de datos
-
-export const userDelete = (req, res) => {
+export const userDelete = async (req, res) => {
   try {
-    return res.status(200).send({
+    const [result] = await pool.query(
+      "DELETE FROM usuarios WHERE id_user = ?",
+      [req.params.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Id no encontrado" });
+    }
+
+    return res.status(204).send({
       status: "success",
-      message: "Metodo para Eliminar eventos exitosa",
+      message: "Eliminar eventos exitosa",
+      result,
     });
   } catch (error) {
     return res.status(500).json({
       status: "error",
       message: "Error al obtener las consulta",
+      error: error.message,
     });
   }
 };
