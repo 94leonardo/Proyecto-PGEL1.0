@@ -3,6 +3,7 @@ import { PORT } from "./config.js"; // Importa la configuración del puerto desd
 import indexRoutes from "./routes/index.routes.js"; // Importa las rutas definidas en el archivo index.routes.js
 import morgan from "morgan"; // Importa morgan para logging
 import userRouter from "./routes/user.routes.js";
+import eventRouter from "./routes/event.routes.js";
 
 
 
@@ -14,6 +15,7 @@ app.use(express.json()); // Usa express.json() para analizar solicitudes JSON
 app.use(morgan("dev")); // Usa morgan para loguear peticiones HTTP
 app.use(indexRoutes); // Usa las rutas importadas en la aplicación
 app.use(userRouter);
+app.use(eventRouter);
 
 // Middleware para manejar errores
 app.use((err, req, res, next) => {
